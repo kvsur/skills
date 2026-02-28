@@ -10,6 +10,12 @@ Skills follow the [Agent Skills](https://agentskills.io/) format.
 
 Performs a comprehensive review of the specified code scope (code-review, CR, MR), covering multiple dimensions including bugs, performance, security, code quality, and architectural design, and outputs a detailed review report.
 
+**Single Installation**
+
+```bash
+npx skills add https://github.com/kvsur/skills --skill code-review
+```
+
 **Use when:**
 - Reviewing code in a specified directory
 - Reviewing a specified file
@@ -21,7 +27,7 @@ Performs a comprehensive review of the specified code scope (code-review, CR, MR
 ## Installation
 
 ```bash
-npx skills add kvsur/skills
+npx skills add https://github.com/kvsur/skills
 ```
 
 ## Usage
