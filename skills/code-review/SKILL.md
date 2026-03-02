@@ -1,87 +1,127 @@
 ---
 name: code-review
-description: 对提供的指定范围的代码进行全面评审（code-review、CR、MR），涵盖bug、性能、安全性、代码质量、架构设计等多个维度，并输出详细的评审报告。
-license: MIT
+description: "Expert code review of specified change ranges with a senior engineer lens. Detects SOLID violations, security risks, and proposes actionable improvements."
 ---
 
-# Role: Code Reviewer
+# Code Review Expert
 
-你是一位拥有10 年以上经验的高级软件工程师，擅长代码评审。根据用户指定的需要评审的代码或者代码变更进行全面评审。
-用户指定待评审的内容可能是下列几种类型的输入：
-1. 代码片段（单个函数、类、模块等）
-2. Git代码变更（提交记录对应的hash变更、当前仓库暂未提交的变更（更改/暂存的更改）、某个分支的变更，最新一次提交的变更 等）
-3. 代码库（整个项目的代码）
-4. 设计文档（架构设计、技术方案等） 
-如果用户没有指定说明，默认对当前仓库的（更改+暂存的更改）进行评审，提前询问告知用户评审的范围；如果用户指定了评审范围，确认后进行评审。
+## Overview
 
-请从以下维度逐一分析：
-## 评审维度
+Perform a structured review of the specified change ranges with focus on SOLID, architecture, removal candidates, and security risks. Default to review-only output unless the user asks to implement changes.
 
-1. **🐛 Bug 与潜在风险**
-   - 逻辑错误、边界条件、空指针/空值处理
-   - 并发/线程安全问题
-   - 资源泄漏（内存、文件句柄、数据库连接等）
-   - 最重要，优先评审这类问题
+## Supported Review Scope
+1. Code snippets (single functions, classes, modules, or similar units)
+2. Git change sets (specific commit hashes, current uncommitted changes including staged and unstaged files, branch-to-branch diffs, or the latest commit)
+3. Repository-wide review (full project codebase)
+4. Design artifacts (architecture docs, technical design proposals, and related specifications)
 
-2. **🔒 安全性**
-   - SQL 注入、XSS、CSRF 等常见漏洞
-   - 敏感信息泄露（硬编码密钥、Token、密码等）
-   - 权限校验是否充分
+If the user does not explicitly define the review scope, default to reviewing the current repository's staged and unstaged changes, and confirm this scope before starting. If the user provides a scope, restate and confirm it, then proceed with the review.
 
-3. **⚡ 性能**
-   - 是否存在 N+1 查询、不必要的循环、重复计算
-   - 大数据量场景下的性能表现
-   - 缓存使用是否合理
+## Severity Levels
 
-4. **📐 代码质量与规范**
-   - 命名是否清晰、符合项目规范
-   - 函数/方法长度是否合理，职责是否单一
-   - 代码重复（DRY 原则）
-   - 注释是否充分且有意义
+| Level | Name | Description | Action |
+|-------|------|-------------|--------|
+| **P0** | Critical | Security vulnerability, data loss risk, correctness bug | Must block merge |
+| **P1** | High | Logic error, significant SOLID violation, performance regression | Should fix before merge |
+| **P2** | Medium | Code smell, maintainability concern, minor SOLID violation | Fix in this PR or create follow-up |
+| **P3** | Low | Style, naming, minor suggestion | Optional improvement |
 
-5. **🏗️ 架构与设计**
-   - 是否符合 SOLID 原则
-   - 模块耦合度、依赖方向是否合理
-   - 是否有更优的设计模式可选
+## Workflow
 
-6. **✅ 可测试性**
-   - 是否包含单元测试/集成测试
-   - 测试覆盖率是否足够
-   - 测试用例是否覆盖了边界情况
+### 1) Preflight context
 
-7. **📝 其他**
-   - 兼容性（向前/向后兼容）
-   - 错误处理与日志记录
-   - 文档/CHANGELOG 是否需要更新
+- Confirm the review scope with the user before starting. 
+- Identify entry points, ownership boundaries, and critical paths (auth, payments, data writes, network).
 
-8. **📄 针对React项目的最佳实践**
-   - 如果该项目使用了React 且本地安装了 `vercel-react-best-practices` skill，请评审是否遵循了该技能中定义的最佳实践
+**Edge cases:**
+- **No changes**: If `changes` is empty, inform user and ask if they want to review staged changes or a specific commit range.
+- **Large diff (>500 lines)**: Summarize by file first, then review in batches by module/feature area.
+- **Mixed concerns**: Group findings by logical feature, not just file order.
 
-## 输出格式
+### 2) SOLID + architecture smells
 
-请按以下格式输出评审结果：
+- Load `references/solid-checklist.md` for specific prompts.
+- Look for:
+  - **SRP**: Overloaded modules with unrelated responsibilities.
+  - **OCP**: Frequent edits to add behavior instead of extension points.
+  - **LSP**: Subclasses that break expectations or require type checks.
+  - **ISP**: Wide interfaces with unused methods.
+  - **DIP**: High-level logic tied to low-level implementations.
+- When you propose a refactor, explain *why* it improves cohesion/coupling and outline a minimal, safe split.
+- If refactor is non-trivial, propose an incremental plan instead of a large rewrite.
 
-### 📊 总体评价
-> [总体评价：通过 ✅ / 需修改后通过 ⚠️ / 需重新设计 ❌]
-> [一句话总结]
+### 3) Removal candidates + iteration plan
 
-如果MR中没有可能导致程序bug的明显缺陷，可以直接输出“无问题”。
-否则，按照以下格式输出存在的问题。注意问题的严重程度分类。如果某一类别没有对应的问题，可以输出空表。
+- Load `references/removal-plan.md` for template.
+- Identify code that is unused, redundant, or feature-flagged off.
+- Distinguish **safe delete now** vs **defer with plan**.
+- Provide a follow-up plan with concrete steps and checkpoints (tests/metrics).
 
-### 🚨 必须修改 (Critical)
-| # | 文件 | 行号 | 问题描述 | 建议修改 |
-|---|------|------|----------|----------|
-| 1 | xxx  | xx   | xxx      | xxx      |
+### 4) Security and reliability scan
 
-### ⚠️ 建议修改 (Warning)
-| # | 文件 | 行号 | 问题描述 | 建议修改 |
-|---|------|------|----------|----------|
-| 1 | xxx  | xx   | xxx      | xxx      |
+- Load `references/security-checklist.md` for coverage.
+- Check for:
+  - XSS, injection (SQL/NoSQL/command), SSRF, path traversal
+  - AuthZ/AuthN gaps, missing tenancy checks
+  - Secret leakage or API keys in logs/env/files
+  - Rate limits, unbounded loops, CPU/memory hotspots
+  - Unsafe deserialization, weak crypto, insecure defaults
+  - **Race conditions**: concurrent access, check-then-act, TOCTOU, missing locks
+- Call out both **exploitability** and **impact**.
 
-### 💡 优化建议 (Info)
-| # | 文件 | 行号 | 问题描述 | 建议修改 |
-|---|------|------|----------|----------|
-| 1 | xxx  | xx   | xxx      | xxx      |
+### 5) Code quality scan
 
-## 输出文件
-将规定格式的评审结果输出到项目根目录的 `code-review` 目录下的 `[file-name]-review.md` 文件中，`[file-name]` 替换为被评审的文件名（不带扩展名）。如果评审范围是一个分支或提交，则使用 `branch-[branch-name]-review.md` 或 `commit-[commit-hash]-review.md` 作为文件名。
+- Load `references/code-quality-checklist.md` for coverage.
+- Check for:
+  - **Error handling**: swallowed exceptions, overly broad catch, missing error handling, async errors
+  - **Performance**: N+1 queries, CPU-intensive ops in hot paths, missing cache, unbounded memory
+  - **Boundary conditions**: null/undefined handling, empty collections, numeric boundaries, off-by-one
+- Flag issues that may cause silent failures or production incidents.
+
+### 6) React Project Best Practices
+- If the project uses React and the `vercel-react-best-practices` skill is installed locally, review whether the code adheres to the best practices defined in that skill.
+- If the `vercel-react-best-practices` skill is not installed, prompt the user to install it for React-specific best practice coverage.
+
+## Output Format
+
+Output the review results in the following format:
+
+```markdown
+
+## 📊 Overall Assessment
+> [Verdict: Approved ✅ / Approved with Changes ⚠️ / Requires Redesign ❌]
+> [One-sentence summary]
+
+If there are no obvious defects in the MR that could cause program bugs, output “No issues found.”
+Otherwise, report the issues in the following format. Pay attention to severity classification. If there are no issues in a given category, the table may be left empty.
+
+## 🚨 Must Fix (Critical)
+| # | File | Line | Issue | Recommendation |
+|---|------|------|-------|----------------|
+| 1 | xxx  | xx   | xxx   | xxx            |
+
+## ⚠️ Should Fix (Warning)
+| # | File | Line | Issue | Recommendation |
+|---|------|------|-------|----------------|
+| 1 | xxx  | xx   | xxx   | xxx            |
+
+## 💡 Suggestions (Info)
+| # | File | Line | Issue | Recommendation |
+|---|------|------|-------|----------------|
+| 1 | xxx  | xx   | xxx   | xxx            |
+
+```
+
+## Output File
+Save the formatted review output to a `[file-name]-review.md` file under the `code-review` directory in the project root, replacing `[file-name]` with the name of the reviewed file (without extension). If the review scope is a branch or commit, use `branch-[branch-name]-review.md` or `commit-[commit-hash]-review.md` as the file name.
+
+## Resources
+
+### references/
+
+| File | Purpose |
+|------|---------|
+| `solid-checklist.md` | SOLID smell prompts and refactor heuristics |
+| `security-checklist.md` | Web/app security and runtime risk checklist |
+| `code-quality-checklist.md` | Error handling, performance, boundary conditions |
+| `removal-plan.md` | Template for deletion candidates and follow-up plan |
