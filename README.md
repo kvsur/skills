@@ -23,6 +23,22 @@ npx skills add https://github.com/kvsur/skills --skill code-review
 - Reviewing uncommitted changes in the current repository
 - ...
 
+### phased-work-planner
+
+Plans and tracks long-running engineering work that spans multiple sessions. It breaks a large effort (rewrites, migrations, ports, service extractions, big refactors, spec-driven features) into verifiable phases, then persists the goal, plan, progress, and raw context in `.work-planner/` so the work survives context resets and hands off cleanly between sessions.
+
+**Single Installation**
+
+```bash
+npx skills add https://github.com/kvsur/skills --skill phased-work-planner
+```
+
+**Use when:**
+- Planning a big effort before touching code
+- Breaking work into phases or steps with verification criteria for each step
+- Resuming or checking the progress of a previously saved plan
+- ...
+
 
 ## Installation
 
@@ -43,6 +59,12 @@ Review this latest commit.
 ```
 ```
 Review uncommit change for this project.
+```
+```
+Plan this database migration in phases before writing any code.
+```
+```
+Resume the previous migration plan and report its current progress.
 ```
 
 ## Skill Structure
