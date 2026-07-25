@@ -67,6 +67,22 @@ Plan this database migration in phases before writing any code.
 Resume the previous migration plan and report its current progress.
 ```
 
+### xquik-x-research
+
+Research X conversations with Xquik exports, REST API responses, or MCP output. Useful for launch research, audience discovery, competitor tracking, and creator monitoring.
+
+**Single Installation**
+
+```bash
+npx skills add https://github.com/kvsur/skills --skill xquik-x-research
+```
+
+**Use when:**
+- Analyzing X posts, profiles, searches, trends, or follower data from Xquik
+- Turning X data into audience themes and content opportunities
+- Monitoring competitors, creators, or market conversations
+- ...
+
 ## Skill Structure
 
 Each skill contains:
